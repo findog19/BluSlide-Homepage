@@ -1,9 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { Concept, GallerySection, AttentionSignals } from "@/types";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import { generateText } from "./ai-client";
 
 const HYBRID_GENERATION_PROMPT = `You are synthesizing new brand name concepts by blending qualities the user has shown interest in.
 
@@ -95,26 +91,17 @@ export async function generateHybridGallery(
       .replace("{highInterestSections}", highInterestSections)
       .replace("{examinedConcepts}", conceptsToUse);
 
-    const message = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 4000,
+    // Generate using unified AI client (supports both Claude and OpenAI)
+    const response = await generateText({
+      prompt,
+      maxTokens: 4000,
       temperature: 1,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
     });
 
-    // Extract the JSON from the response
-    const responseText =
-      message.content[0].type === "text" ? message.content[0].text : "";
-
     // Parse the JSON response
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const jsonMatch = response.text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error("No JSON found in Claude response");
+      throw new Error("No JSON found in AI response");
     }
 
     const parsed = JSON.parse(jsonMatch[0]);

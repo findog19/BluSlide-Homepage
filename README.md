@@ -6,14 +6,14 @@ An intelligent idea exploration platform that learns from your browsing behavior
 
 - **Natural Browsing**: Browse curated galleries without forced interactions
 - **Behavioral Tracking**: Intelligent attention tracking using hover patterns, dwell time, and section visits
-- **AI-Powered Generation**: Uses Claude AI to generate initial concept galleries and targeted hybrid ideas
+- **AI-Powered Generation**: Supports both Anthropic Claude and OpenAI GPT-4 to generate initial concept galleries and targeted hybrid ideas
 - **Progressive Refinement**: Each round gets more targeted based on what resonates with you
 
 ## Tech Stack
 
 - **Frontend**: Next.js 14 (App Router), React, TypeScript, Tailwind CSS
 - **Backend**: Next.js API routes
-- **AI**: Anthropic Claude API (Claude 3.5 Sonnet)
+- **AI**: Anthropic Claude API (Claude 3.5 Sonnet) or OpenAI API (GPT-4o)
 - **Deployment**: Vercel
 
 ## Getting Started
@@ -21,7 +21,7 @@ An intelligent idea exploration platform that learns from your browsing behavior
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Anthropic API key ([Get one here](https://console.anthropic.com/))
+- **Either** an Anthropic API key ([Get one here](https://console.anthropic.com/)) **OR** an OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
 
 ### Installation
 
@@ -41,9 +41,19 @@ npm install
 cp .env.example .env
 ```
 
-4. Add your Anthropic API key to `.env`:
-```
+4. Configure your AI provider in `.env`:
+
+**Option A: Using Anthropic Claude (default)**
+```bash
+AI_PROVIDER=anthropic
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+**Option B: Using OpenAI GPT-4**
+```bash
+AI_PROVIDER=openai
+OPENAI_API_KEY=your_openai_api_key_here
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
@@ -81,6 +91,7 @@ npm run dev
 ├── hooks/
 │   └── useAttentionTracking.ts # Attention tracking hook
 ├── lib/
+│   ├── ai-client.ts            # Unified AI client (Claude/OpenAI)
 │   ├── gallery-generator.ts    # Initial gallery generation logic
 │   └── hybrid-generator.ts     # Hybrid concept generation logic
 └── types/
@@ -113,8 +124,26 @@ The system tracks:
 
 ## Environment Variables
 
-- `ANTHROPIC_API_KEY`: Your Anthropic API key (required)
+- `AI_PROVIDER`: Which AI provider to use - `"anthropic"` or `"openai"` (default: `"anthropic"`)
+- `ANTHROPIC_API_KEY`: Your Anthropic API key (required if using Claude)
+- `OPENAI_API_KEY`: Your OpenAI API key (required if using GPT-4)
 - `NEXT_PUBLIC_APP_URL`: Base URL for the application (optional)
+
+### AI Provider Selection
+
+The system supports both Anthropic Claude and OpenAI GPT-4. Choose based on your preference:
+
+**Anthropic Claude 3.5 Sonnet:**
+- Excellent at creative tasks
+- Strong at following structured output formats
+- Good at understanding nuanced requirements
+
+**OpenAI GPT-4o:**
+- Highly capable general-purpose model
+- Strong creative naming abilities
+- Wide availability
+
+Switch between providers by changing the `AI_PROVIDER` environment variable. The application works identically with either provider.
 
 ## Development
 
@@ -138,7 +167,9 @@ npm run lint
 
 1. Push your code to GitHub
 2. Import the repository in Vercel
-3. Add the `ANTHROPIC_API_KEY` environment variable in Vercel settings
+3. Add environment variables in Vercel settings:
+   - `AI_PROVIDER` (set to `anthropic` or `openai`)
+   - `ANTHROPIC_API_KEY` (if using Claude) **OR** `OPENAI_API_KEY` (if using GPT-4)
 4. Deploy
 
 The app will automatically deploy on every push to the main branch.
