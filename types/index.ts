@@ -5,6 +5,7 @@ export interface Concept {
   tagline: string;
   qualities: string[];
   sectionId: string;
+  blends?: string[]; // For hybrid concepts - shows which concepts were blended
 }
 
 export interface GallerySection {
@@ -12,6 +13,8 @@ export interface GallerySection {
   title: string;
   description: string;
   concepts: Concept[];
+  sophistication?: number; // 1-8 scale (1=practical, 8=abstract/creative)
+  instructions?: string; // Generation instructions for AI
 }
 
 // Attention tracking types
@@ -56,10 +59,12 @@ export interface GenerateGalleryResponse {
 }
 
 export interface GenerateHybridsRequest {
-  sessionId: string;
-  attentionData: AttentionSignals;
+  sessionId?: string;
+  selectedConcepts: Concept[]; // User-selected concepts to blend
   originalGallery: GallerySection[];
   challenge: string;
+  // Legacy support
+  attentionData?: AttentionSignals;
 }
 
 export interface GenerateHybridsResponse {

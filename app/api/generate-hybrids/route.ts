@@ -1,78 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateHybridGallery } from "@/lib/hybrid-generator";
-import { GenerateHybridsRequest, GenerateHybridsResponse } from "@/types";
+import { Concept } from "@/types";
 
 export async function POST(request: NextRequest) {
   try {
-    const body: GenerateHybridsRequest = await request.json();
-    const { attentionData, originalGallery, challenge } = body;
+    const body = await request.json();
+    const { selectedConcepts, challenge, originalGallery } = body;
 
-    if (!attentionData || !originalGallery || !challenge) {
+    if (!selectedConcepts || !Array.isArray(selectedConcepts)) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "selectedConcepts is required and must be an array" },
         { status: 400 }
       );
     }
 
-    // Generate hybrid concepts based on attention data
+    if (selectedConcepts.length < 2) {
+      return NextResponse.json(
+        { error: "Must select at least 2 concepts" },
+        { status: 400 }
+      );
+    }
+
+    if (!challenge) {
+      return NextResponse.json(
+        { error: "challenge is required" },
+        { status: 400 }
+      );
+    }
+
+    // Generate hybrids from selected concepts only
     const hybrids = await generateHybridGallery(
-      originalGallery,
-      attentionData,
+      selectedConcepts as Concept[],
       challenge
     );
 
-    // Calculate insights from attention data
-    const sectionDwellArray = Object.entries(attentionData.sectionDwellTimes)
-      .map(([sectionId, dwellTime]) => {
-        const section = originalGallery.find((s) => s.id === sectionId);
-        return {
-          sectionId,
-          sectionTitle: section?.title || "",
-          dwellTime,
-          interestLevel:
-            dwellTime > 20000
-              ? ("high" as const)
-              : dwellTime > 10000
-              ? ("medium" as const)
-              : ("low" as const),
-          examinedConcepts: section?.concepts.filter((c) =>
-            Object.keys(attentionData.conceptExaminations).includes(c.id)
-          ) || [],
-        };
-      })
-      .sort((a, b) => b.dwellTime - a.dwellTime);
-
-    const highInterestSections = sectionDwellArray
-      .filter((s) => s.interestLevel === "high")
-      .slice(0, 3);
-
-    const examinedConcepts = originalGallery
-      .flatMap((section) => section.concepts)
-      .filter((concept) =>
-        Object.keys(attentionData.conceptExaminations).includes(concept.id)
-      );
-
-    const totalBrowsingTime = Object.values(
-      attentionData.sectionDwellTimes
-    ).reduce((sum, time) => sum + time, 0);
-
-    const insights = {
-      highInterestSections,
-      examinedConcepts,
-      totalBrowsingTime,
-      readyForHybrids: totalBrowsingTime > 60000, // 1 minute
-    };
-
-    const response: GenerateHybridsResponse = {
-      hybrids,
-      insights,
-    };
-
-    return NextResponse.json(response);
+    return NextResponse.json({ hybrids });
   } catch (error) {
-    console.error("Error in generate-hybrids API:", error);
+    console.error("Hybrid generation error:", error);
     return NextResponse.json(
-      { error: "Failed to generate hybrids" },
+      { error: "Failed to generate hybrid concepts" },
       { status: 500 }
     );
   }
