@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingScreen from "@/components/LoadingScreen";
 
 export default function Home() {
   const [challenge, setChallenge] = useState("");
@@ -57,7 +58,10 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <>
+      {isGenerating && <LoadingScreen />}
+
+      <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto px-4 py-16 max-w-4xl">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-900 mb-4">
@@ -146,5 +150,6 @@ export default function Home() {
         </div>
       </div>
     </main>
+    </>
   );
 }

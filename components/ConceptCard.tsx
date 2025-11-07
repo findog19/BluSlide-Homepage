@@ -1,86 +1,87 @@
 "use client";
 
 import { Concept } from "@/types";
-import { useRef, useState } from "react";
 
 interface ConceptCardProps {
   concept: Concept;
-  onHover?: (conceptId: string, duration: number) => void;
-  onExamine?: (conceptId: string) => void;
+  isSelected?: boolean;
+  onSelect?: (conceptId: string) => void;
 }
 
 export default function ConceptCard({
   concept,
-  onHover,
-  onExamine,
+  isSelected = false,
+  onSelect,
 }: ConceptCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const hoverStartRef = useRef<number | null>(null);
-
-  const handleMouseEnter = () => {
-    hoverStartRef.current = Date.now();
-  };
-
-  const handleMouseLeave = () => {
-    if (hoverStartRef.current && onHover) {
-      const duration = Date.now() - hoverStartRef.current;
-      onHover(concept.id, duration);
-      hoverStartRef.current = null;
-    }
-  };
-
-  const handleClick = () => {
-    setIsExpanded(!isExpanded);
-    if (onExamine && !isExpanded) {
-      onExamine(concept.id);
+  const handleSelect = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onSelect) {
+      onSelect(concept.id);
     }
   };
 
   return (
     <div
-      className={`group relative rounded-lg border bg-white transition-all duration-200
-                  hover:shadow-lg hover:-translate-y-1 cursor-pointer
-                  ${isExpanded ? "border-blue-400 shadow-lg" : "border-gray-200"}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
+      className={`
+        relative rounded-lg border bg-white p-6
+        transition-all duration-200 hover:shadow-lg hover:-translate-y-1
+        ${isSelected
+          ? 'ring-4 ring-blue-500 border-blue-500 bg-blue-50'
+          : 'border-gray-200'
+        }
+      `}
     >
-      <div className="p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-          {concept.name}
-        </h3>
-        <p className="text-sm text-gray-600 mb-3 leading-relaxed">
-          {concept.tagline}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {concept.qualities.map((quality, index) => (
-            <span
-              key={index}
-              className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700
-                       group-hover:bg-blue-50 group-hover:text-blue-700 transition-colors"
-            >
-              {quality}
-            </span>
-          ))}
+      {/* Selection button */}
+      {onSelect && (
+        <button
+          onClick={handleSelect}
+          className="absolute top-3 right-3 text-2xl transition-transform hover:scale-110 z-10"
+          aria-label={isSelected ? "Deselect concept" : "Select concept"}
+          title={isSelected ? "Click to deselect" : "Click to select"}
+        >
+          {isSelected ? '⭐' : '☆'}
+        </button>
+      )}
+
+      {/* Concept name */}
+      <h3 className="text-xl font-semibold text-gray-900 mb-2 pr-8">
+        {concept.name}
+      </h3>
+
+      {/* Tagline */}
+      <p className="text-sm text-gray-600 mb-3 leading-relaxed">
+        {concept.tagline}
+      </p>
+
+      {/* Quality tags */}
+      <div className="flex flex-wrap gap-2">
+        {concept.qualities.map((quality, idx) => (
+          <span
+            key={idx}
+            className={`text-xs px-2 py-1 rounded-full ${
+              isSelected
+                ? 'bg-blue-200 text-blue-800'
+                : 'bg-gray-100 text-gray-700'
+            }`}
+          >
+            {quality}
+          </span>
+        ))}
+      </div>
+
+      {/* Show blends attribution for hybrid concepts */}
+      {concept.blends && concept.blends.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-200">
+          <p className="text-xs text-gray-500">
+            Blends: <span className="font-medium text-gray-700">{concept.blends.join(" + ")}</span>
+          </p>
         </div>
+      )}
 
-        {/* Show blended from info for hybrid concepts */}
-        {(concept as any).blendedFrom && isExpanded && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-xs text-gray-500">
-              Blends:{" "}
-              <span className="font-medium text-gray-700">
-                {(concept as any).blendedFrom.join(" + ")}
-              </span>
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Hover indicator */}
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="w-2 h-2 rounded-full bg-blue-400"></div>
-      </div>
+      {/* Selection indicator overlay */}
+      {isSelected && (
+        <div className="absolute inset-0 border-4 border-blue-500 rounded-lg pointer-events-none" />
+      )}
     </div>
   );
 }
