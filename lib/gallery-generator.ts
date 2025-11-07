@@ -141,10 +141,15 @@ export async function generateInitialGallery(
   userChallenge: string
 ): Promise<GallerySection[]> {
   try {
+    console.log("Generating gallery for challenge:", userChallenge.substring(0, 100));
+
     const prompt = GALLERY_GENERATION_PROMPT.replace(
       "{userChallenge}",
       userChallenge
     );
+
+    console.log("Prompt length:", prompt.length, "characters");
+    console.log("Calling AI generation...");
 
     // Generate using unified AI client (supports both Claude and OpenAI)
     const response = await generateText({
@@ -153,13 +158,24 @@ export async function generateInitialGallery(
       temperature: 1,
     });
 
+    console.log("AI response received, length:", response.text.length);
+
     // Parse the JSON response
     const jsonMatch = response.text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error("No JSON found in AI response");
+      console.error("Failed to find JSON in response. First 500 chars:", response.text.substring(0, 500));
+      throw new Error("No JSON found in AI response. The AI may have returned an error or unexpected format.");
     }
 
+    console.log("Parsing JSON response...");
     const parsed = JSON.parse(jsonMatch[0]);
+
+    if (!parsed.sections || !Array.isArray(parsed.sections)) {
+      console.error("Invalid response structure:", parsed);
+      throw new Error("AI response missing 'sections' array. Response structure is invalid.");
+    }
+
+    console.log("Found", parsed.sections.length, "sections");
 
     // Transform and validate the sections
     const sections: GallerySection[] = parsed.sections.map(
@@ -178,9 +194,14 @@ export async function generateInitialGallery(
       })
     );
 
+    console.log("Gallery generation complete. Total concepts:", sections.reduce((sum, s) => sum + s.concepts.length, 0));
+
     return sections;
   } catch (error) {
-    console.error("Error generating gallery:", error);
-    throw new Error("Failed to generate gallery");
+    console.error("Error in generateInitialGallery:", error);
+    if (error instanceof Error) {
+      throw error; // Re-throw with original message
+    }
+    throw new Error("Failed to generate gallery: " + String(error));
   }
 }

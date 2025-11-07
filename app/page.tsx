@@ -26,7 +26,10 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate gallery");
+        const errorData = await response.json();
+        const errorMessage = errorData.details || errorData.error || "Failed to generate gallery";
+        console.error("API Error:", errorData);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -44,7 +47,8 @@ export default function Home() {
       router.push(`/gallery/${data.sessionId}`);
     } catch (error) {
       console.error("Error generating gallery:", error);
-      alert("Failed to generate gallery. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate gallery. Please try again.";
+      alert(`Error: ${errorMessage}`);
       setIsGenerating(false);
     }
   };

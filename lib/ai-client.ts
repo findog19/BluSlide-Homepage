@@ -61,6 +61,7 @@ async function generateWithAnthropic(
   temperature: number
 ): Promise<AIResponse> {
   try {
+    console.log("Calling Anthropic API...");
     const client = getAnthropicClient();
     const message = await client.messages.create({
       model: "claude-3-5-sonnet-20241022",
@@ -74,11 +75,17 @@ async function generateWithAnthropic(
       ],
     });
 
+    console.log("Anthropic API response received");
     const text = message.content[0].type === "text" ? message.content[0].text : "";
     return { text };
   } catch (error) {
     console.error("Error with Anthropic API:", error);
-    throw new Error("Failed to generate with Anthropic Claude");
+
+    // Provide more specific error message
+    if (error instanceof Error) {
+      throw new Error(`Anthropic API error: ${error.message}`);
+    }
+    throw new Error("Failed to generate with Anthropic Claude - unknown error");
   }
 }
 
@@ -88,6 +95,7 @@ async function generateWithOpenAI(
   temperature: number
 ): Promise<AIResponse> {
   try {
+    console.log("Calling OpenAI API...");
     const client = getOpenAIClient();
     const completion = await client.chat.completions.create({
       model: "gpt-4o", // Using GPT-4o for best quality
@@ -102,11 +110,17 @@ async function generateWithOpenAI(
       response_format: { type: "text" },
     });
 
+    console.log("OpenAI API response received");
     const text = completion.choices[0]?.message?.content || "";
     return { text };
   } catch (error) {
     console.error("Error with OpenAI API:", error);
-    throw new Error("Failed to generate with OpenAI");
+
+    // Provide more specific error message
+    if (error instanceof Error) {
+      throw new Error(`OpenAI API error: ${error.message}`);
+    }
+    throw new Error("Failed to generate with OpenAI - unknown error");
   }
 }
 
